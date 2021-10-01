@@ -1,0 +1,67 @@
+# CloudBuffer Format Specification
+CloudBuffers is a binary serialization format derived from FlatBuffers. Like FlatBuffers, CloudBuffers provides a highly-efficient binary format. 
+
+## What’s wrong with FlatBuffers?
+Not much! FlatBuffers represents a big step forward in efficiency over incumbent formats like protobuf, which optimizes for size.
+However, CloudBuffers specifically aims to modernize parts of FlatBuffers:
+-	Support for 56-bit addresses, so buffers can exceed 2GB.
+-	Support for variable-sized integers (varints) to allow denser packing of data, all without losing random access.
+-	A reduced emphasis on alignment, which reduces payload size.
+-	A new vtable format, which preserves random access while reducing payload size.
+-	In addition to tables, CloudBuffers canonically supports structs and unions as root types.
+
+On the whole, CloudBuffers offers:
+-	Random access
+-	Denser packing of data than FlatBuffers
+-	Comparable speed to FlatBuffers
+-	Support for buffers up to 256TB.
+
+## Structure
+A CloudBuffer consists of the following elements:
+#### Footer
+Metadata about the type of buffer and a pointer to the root object. This is the last item in a CloudBuffer.
+
+#### Tables
+Tables are collections of optional fields. Each table has a corresponding VTable, which contains data about the relative offsets and presence of fields within a table. Tables are tolerant of new fields being added, so buffers remain compatible between schema versions.
+
+####	Vectors and Strings
+Vectors and strings are a set of contiguous elements with a prefixed length.
+
+####	VTables
+A VTable contains data about what fields are set in a table, and how they are laid out. VTables are used to solve 3 problems:
+- Schema Extensibility (new fields added in later versions)
+- Field presence detection (optional fields set / not set)
+- Packing of data within a table
+
+####	Structs
+Structs are analogous to C structs. They are fixed size and may only contain structs and scalars. Fields in a struct are accessed by offsets. Structs are not versionable and fields are not optional.
+
+####	Unions
+CloudBuffer discriminated unions may contain strings, structs, or tables. A union is a discriminator byte and an offset.
+
+Each of these elements has a contiguous memory layout. CloudBuffers are written front-to-back, with child elements being written before their parents. Therefore, the root element in a CloudBuffer will be the last item in the buffer.
+
+## Primitives
+Primitives are the building block of CloudBuffers. CloudBuffer schemas support the typical array of data types:
+```
+   int8, int16, int32, int64 (two's complement, little-endian)
+   bool, uint8, uint16, uint32, uint64 (unsigned, little endian)
+   float32, float64 (IEEE-754)
+```
+While `bool` is a primitive, it is actually encoded as a `uint8` with `true` corresponding to `1` and `false` corresponding to `0`. When decoding, 
+a value of `0` corresponds to `false`, and any other value corresponds to `true` (ie, `!= 0`).
+
+## Internal Primitives
+One of the main drivers of data size in FlatBuffers is the notion that all internal offsets are fixed-width 32 bit integers. In practice, however, these offsets can usually
+be expressed in one byte. CloudBuffers defines a variable-width offset type: `varoffset`. `varoffset` is a signed variable-width integer that uses a modified version of PrefixVarInt encoding:
+
+| width | tag byte | range |
+|-------|----------|-------|
+|   1   | `x x x x x x 1 s` | `[-63, 63]` |
+|   2   | `x x x x x 1 0 s` | `[-8191, 8191]` |
+|   3   | `x x x x 1 0 0 s` | `[-(2^20 - 1), 2^20 - 1]` |
+|   4   | `x x x 1 0 0 0 s` | `[-(2^27 - 1), 2^27 - 1]` |
+|   5   | `x x 1 0 0 0 0 s` | `[-(2^34 - 1), 2^34 - 1]` |
+|   6   | `x 1 0 0 0 0 0 s` | `[-(2^41 - 1), 2^41 - 1]` |
+|   7   | `1 0 0 0 0 0 0 s` | `[-(2^48 - 1), 2^48 - 1]` |
+|   8   | `0 0 0 0 0 0 0 s` | `[-(2^56 - 1), 2^56 - 1]` |
