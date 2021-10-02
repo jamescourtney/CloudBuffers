@@ -124,3 +124,32 @@ public static long Decode(ulong value)
    return (long)value;
 }
 ```
+
+## VTables
+A vtable stores information about which fields are present in table, where they are stored in a table. VTables are essential for supporting schema evolution as they allow `V(N)` and `V(N+1)` schemas to interoperate. VTables in CloudBuffers are structured as:
+- A header byte indicating the length of the presence mask.
+- The presence mask. The presence mask is a bit field up to 8 bytes in length, where each set bit indicates the presence of a particular field. CloudBuffer tables can support up to 64 fields per table.
+- A set of offsets, encoded as `uint16` values. The first offset corresponds to the first bit in the presence mask. The number of offsets must be equal to the number of set bits in the presence mask. Each `uint16` represents the offset in the table of that field.
+
+Each table stores a `varoffset` reference to its vtable. This allows multiple tables to point at a common vtable, if the offsets and presence mask are equal. Tables from different objects can also share a vtable, as long as they are equivalent.
+
+### Example 1
+```
+01 6A 00 00 04 00 08 00 16 00
+```
+The first byte (`01`) indicates that the presence mask is one byte in length. The presence mask (`6A`) is represented in binary as: `0110 1010`. This indicates that field indexes `1`, `3`, `5`, and `6` are included in the table.
+
+Using the presence mask to decode the vtable, yields thhis result:
+
+| Table Field Index | Included? | Offset |
+|-------------------|-----------|--------|
+| 0                 | No        |   -1   |
+| 1                 | Yes       |    0   |
+| 2                 | No        |   -1   |
+| 3                 | Yes       |    4   |
+| 4                 | No        |   -1   |
+| 5                 | Yes       |    8   |
+| 6                 | Yes       |   16   |
+| 7                 | No        |   -1   |
+
+The format of the CloudBuffer vtable is quite dense, and needs the SIMD population count instruction (`popcnt` in x86 or `popcount` on ARM) to allow random access reads to the vtable.
