@@ -15,6 +15,7 @@ On the whole, CloudBuffers offers:
 -	Denser packing of data than FlatBuffers
 -	Comparable speed to FlatBuffers
 -	Support for buffers up to 256TB.
+-	A binary format suitable for use as a file format or RPC message format on both cloud scale and embedded devices.
 
 ## Structure
 A CloudBuffer consists of the following elements:
@@ -139,7 +140,7 @@ Each table stores a `varoffset` reference to its vtable. This allows multiple ta
 ```
 The first byte (`01`) indicates that the presence mask is one byte in length. The presence mask (`6A`) is represented in binary as: `0110 1010`. This indicates that field indexes `1`, `3`, `5`, and `6` are included in the table.
 
-Using the presence mask to decode the vtable, yields thhis result:
+Using the presence mask to decode the vtable, yields this result:
 
 | Table Field Index | Included? | Offset |
 |-------------------|-----------|--------|
@@ -152,4 +153,4 @@ Using the presence mask to decode the vtable, yields thhis result:
 | 6                 | Yes       |   16   |
 | 7                 | No        |   -1   |
 
-The format of the CloudBuffer vtable is quite dense, and needs the SIMD population count instruction (`popcnt` in x86 or `popcount` on ARM) to allow random access reads to the vtable.
+The format of the CloudBuffer vtable is quite dense, and needs the population count instruction (`popcnt` in x86 or `popcount` on ARM) to allow random access reads to the vtable. Otherwise, a loop may be used, but the result will be quite slow.
