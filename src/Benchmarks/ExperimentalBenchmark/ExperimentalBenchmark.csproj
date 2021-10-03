@@ -23,9 +23,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FlatSharp.Compiler\FlatSharp.Compiler.csproj" />
-    <ProjectReference Include="..\..\FlatSharp.Runtime\FlatSharp.Runtime.csproj" />
-    <ProjectReference Include="..\..\FlatSharp\FlatSharp.csproj" />
+    <ProjectReference Include="..\..\CloudBuffers.Compiler\CloudBuffers.Compiler.csproj" />
+    <ProjectReference Include="..\..\CloudBuffers.Runtime\CloudBuffers.Runtime.csproj" />
+    <ProjectReference Include="..\..\CloudBuffers\CloudBuffers.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Benchmark.fbs.generated.cs" />
@@ -33,6 +33,6 @@
   </ItemGroup>
 
   <Target Name="FBS" BeforeTargets="BeforeBuild">
-    <Exec Command="..\..\FlatSharp.Compiler\bin\$(Configuration)\net5.0\FlatSharp.Compiler.exe -i Benchmark.fbs -o . --nullable-warnings true" />
+    <Exec Command="..\..\CloudBuffers.Compiler\bin\$(Configuration)\net5.0\CloudBuffers.Compiler.exe -i Benchmark.fbs -o . --nullable-warnings true" />
   </Target>
 </Project>

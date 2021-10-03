@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
-    <id>FlatSharp.Compiler</id>
+    <id>CloudBuffers.Compiler</id>
     <version>$version$</version>
     <releaseNotes>$releaseNotes$</releaseNotes>
     <authors>James Courtney</authors>
@@ -21,10 +21,10 @@
     <file src="_._" target="lib/netcoreapp3.1/" />
     <file src="_._" target="lib/net5.0/" />
     
-    <file src="FlatSharp.Compiler.targets" target="build/netcoreapp3.1/FlatSharp.Compiler.targets" />
-    <file src="FlatSharp.Compiler.targets" target="build/net5.0/FlatSharp.Compiler.targets" />
+    <file src="CloudBuffers.Compiler.targets" target="build/netcoreapp3.1/CloudBuffers.Compiler.targets" />
+    <file src="CloudBuffers.Compiler.targets" target="build/net5.0/CloudBuffers.Compiler.targets" />
     
-    <file src="FlatSharp.Compiler.targets" target="tools/" />
+    <file src="CloudBuffers.Compiler.targets" target="tools/" />
     
     <file src="$OutDir$\netcoreapp3.1\**" target="tools/netcoreapp3.1" />
     <file src="$OutDir$\net5.0\**" target="tools/net5.0" />
